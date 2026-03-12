@@ -111,11 +111,11 @@ def generate_pdf(quotation_id, lang='cn'):
     company_address = get_localized(company, 'address', lang)
     customer = quotation.customer
 
-    # ===== 列宽定义 - 确保表头文字横向显示 =====
+    # ===== 列宽定义 - 确保表头文字横向显示在一行 =====
     # 序号:图片:名称:规格:单价:数量:单位:金额:重量:体积
     # 每列都要足够宽让文字横向显示
-    col_widths = [0.8*cm, 2.5*cm, 1.5*cm, 4.0*cm, 1.5*cm, 1.0*cm, 1.0*cm, 1.5*cm, 1.5*cm, 1.5*cm]
-    # 总和约17.8cm
+    col_widths = [1.0*cm, 2.5*cm, 2.0*cm, 4.5*cm, 1.8*cm, 1.2*cm, 1.2*cm, 1.8*cm, 1.6*cm, 1.6*cm]
+    # 总和约19.2cm
 
     # ===== 构建表格数据 =====
     table_data = []
