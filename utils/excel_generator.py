@@ -3,6 +3,7 @@ from flask import send_file
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
 from openpyxl.utils import get_column_letter
+from openpyxl.drawing.image import Image as XLImage
 from models import Quotation, CompanyConfig
 
 def generate_excel(quotation_id, lang='cn'):
@@ -151,7 +152,7 @@ def generate_excel(quotation_id, lang='cn'):
 
         data = [
             idx,
-            '',  # 图片列
+            '',  # 图片列 - 稍后插入
             name,
             spec or '-',
             f"{currency_symbol}{item.price:.2f}",
@@ -172,6 +173,22 @@ def generate_excel(quotation_id, lang='cn'):
                 cell.alignment = right_align
             else:
                 cell.alignment = left_align
+
+        # 插入图片
+        if item.product.image_path:
+            img_path = os.path.join(os.getcwd(), 'static', 'uploads', item.product.image_path)
+            if os.path.exists(img_path):
+                try:
+                    img = XLImage(img_path)
+                    # 设置图片大小
+                    img.width = 60
+                    img.height = 60
+                    # 设置行高
+                    ws.row_dimensions[row].height = 50
+                    # 插入图片到B列
+                    ws.add_image(img, f'B{row}')
+                except Exception as e:
+                    print(f"Error inserting image: {e}")
 
         row += 1
 
@@ -220,7 +237,7 @@ def generate_excel(quotation_id, lang='cn'):
         ws[f'A{row}'].font = Font(name='Arial', size=9, italic=True)
 
     # 设置列宽
-    column_widths = [6, 8, 25, 15, 15, 8, 8, 15, 12, 12]
+    column_widths = [6, 12, 25, 15, 15, 8, 8, 15, 12, 12]
     for i, width in enumerate(column_widths, 1):
         ws.column_dimensions[get_column_letter(i)].width = width
 
