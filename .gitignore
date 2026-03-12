@@ -16,6 +16,15 @@ static/uploads/*.xlsx
 static/uploads/products/
 static/uploads/quotations/
 
+# Data uploads (原始文件)
+data/uploads/**/*.pdf
+data/uploads/**/*.xlsx
+data/uploads/**/*.xls
+data/uploads/**/*.png
+data/uploads/**/*.jpg
+data/uploads/**/*.jpeg
+data/uploads/**/*.gif
+
 # IDE
 .idea/
 .vscode/

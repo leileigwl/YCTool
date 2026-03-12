@@ -25,6 +25,34 @@ def register_routes(app):
     def categories():
         return render_template('categories.html')
 
+    # 产品数据编辑器页面
+    @app.route('/editor')
+    def product_editor():
+        return render_template('product_editor.html')
+
+    # ===== 产品JSON数据 API =====
+    @app.route('/api/data/products', methods=['GET'])
+    def get_products_json():
+        """读取 products.json 文件"""
+        json_path = os.path.join(os.getcwd(), 'data', 'products.json')
+        if os.path.exists(json_path):
+            with open(json_path, 'r', encoding='utf-8') as f:
+                import json
+                return json.load(f)
+        return []
+
+    @app.route('/api/data/products', methods=['POST'])
+    def save_products_json():
+        """保存 products.json 文件"""
+        json_path = os.path.join(os.getcwd(), 'data', 'products.json')
+        try:
+            import json
+            with open(json_path, 'w', encoding='utf-8') as f:
+                json.dump(request.json, f, ensure_ascii=False, indent=2)
+            return jsonify({'success': True})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+
     # ===== 公司配置 API =====
     @app.route('/api/company', methods=['GET'])
     def get_company():

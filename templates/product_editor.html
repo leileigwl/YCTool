@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>产品数据编辑器</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f5f5f5; }
+        .product-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .spec-text { font-size: 12px; color: #666; max-height: 60px; overflow: hidden; }
+        .filter-bar { position: sticky; top: 0; background: white; z-index: 100; padding: 15px 0; border-bottom: 1px solid #eee; }
+        .category-badge { font-size: 11px; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-3">
+        <div class="filter-bar">
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <h4 class="mb-0">产品数据编辑器</h4>
+                    <small class="text-muted">共 <span id="totalCount">0</span> 个产品</small>
+                </div>
+                <div class="col-md-3">
+                    <input type="text" class="form-control" id="searchInput" placeholder="搜索产品名称...">
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" id="categoryFilter">
+                        <option value="">所有分类</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" id="sortBy">
+                        <option value="name">按名称排序</option>
+                        <option value="price_asc">价格升序</option>
+                        <option value="price_desc">价格降序</option>
+                    </select>
+                </div>
+                <div class="col-md-2 text-end">
+                    <button class="btn btn-success" id="saveAllBtn">保存到JSON</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-3" id="productList"></div>
+    </div>
+
+    <!-- 编辑弹窗 -->
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">编辑产品</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editTempId">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">中文名称 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="editNameCn" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">英文名称</label>
+                            <input type="text" class="form-control" id="editNameEn">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">中文规格</label>
+                            <textarea class="form-control" id="editSpecCn" rows="2"></textarea>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">英文规格</label>
+                            <textarea class="form-control" id="editSpecEn" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">单价</label>
+                            <input type="number" class="form-control" id="editPrice" step="0.01">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">币种</label>
+                            <select class="form-select" id="editCurrency">
+                                <option value="CNY">CNY</option>
+                                <option value="USD">USD</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">中文单位</label>
+                            <input type="text" class="form-control" id="editUnitCn" placeholder="件">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">英文单位</label>
+                            <input type="text" class="form-control" id="editUnitEn" placeholder="pcs">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">重量(kg)</label>
+                            <input type="number" class="form-control" id="editWeight" step="0.01">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">体积(m³)</label>
+                            <input type="number" class="form-control" id="editVolume" step="0.001">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">分类</label>
+                            <select class="form-select" id="editCategory">
+                                <option value="">-- 自动检测 --</option>
+                                <option value="Solar Panel">Solar Panel</option>
+                                <option value="Inverter">Inverter</option>
+                                <option value="Battery">Battery</option>
+                                <option value="Cable">Cable</option>
+                                <option value="Bracket">Bracket</option>
+                                <option value="Box">Box</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveEditBtn">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JSON弹窗 -->
+    <div class="modal fade" id="jsonModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">JSON数据</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <pre id="jsonContent" style="max-height:400px; overflow:auto; background:#f8f9fa; padding:15px; border-radius:5px; font-size:12px;"></pre>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" id="copyJsonBtn">复制JSON</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let products = [];
+        let hasChanges = false;
+        let currentJsonTempId = null;
+
+        // 分类颜色配置
+        const categoryColors = {
+            'Solar Panel': 'bg-warning text-dark',
+            'Inverter': 'bg-primary',
+            'Battery': 'bg-success',
+            'Cable': 'bg-info',
+            'Bracket': 'bg-secondary',
+            'Box': 'bg-dark',
+            'Other': 'bg-light text-dark'
+        };
+
+        // 分类中英文名称映射
+        const categoryNames = {
+            'Solar Panel': '太阳能板',
+            'Inverter': '逆变器',
+            'Battery': '电池',
+            'Cable': '线缆',
+            'Bracket': '支架',
+            'Box': '配电箱',
+            'Other': '其他'
+        };
+
+        // 通过tempId查找产品索引
+        function findProductIndex(tempId) {
+            return products.findIndex(p => p._tempId === tempId);
+        }
+
+        // 获取产品分类
+        function getCategory(p) {
+            if (p.category) return p.category;
+            return detectCategory(p);
+        }
+
+        // 自动检测分类
+        function detectCategory(p) {
+            const name = (p.name_en || p.name_cn || '').toLowerCase();
+            if (name.includes('solar panel') || name.includes('pv module')) return 'Solar Panel';
+            if (name.includes('inverter') || name.includes('逆变器')) return 'Inverter';
+            if (name.includes('battery') || name.includes('电池')) return 'Battery';
+            if (name.includes('cable') || name.includes('wire') || name.includes('线缆')) return 'Cable';
+            if (name.includes('bracket') || name.includes('rack') || name.includes('支架')) return 'Bracket';
+            if (name.includes('box') || name.includes('配电')) return 'Box';
+            return 'Other';
+        }
+
+        // 编辑产品
+        window.doEdit = function(tempId) {
+            const index = findProductIndex(tempId);
+            if (index < 0) return alert('找不到产品');
+            const p = products[index];
+            document.getElementById('editTempId').value = tempId;
+            document.getElementById('editNameCn').value = p.name_cn || '';
+            document.getElementById('editNameEn').value = p.name_en || '';
+            document.getElementById('editSpecCn').value = p.specification_cn || '';
+            document.getElementById('editSpecEn').value = p.specification_en || '';
+            document.getElementById('editPrice').value = p.price || 0;
+            document.getElementById('editCurrency').value = p.currency || 'CNY';
+            document.getElementById('editUnitCn').value = p.unit_cn || '';
+            document.getElementById('editUnitEn').value = p.unit_en || '';
+            document.getElementById('editWeight').value = p.weight || 0;
+            document.getElementById('editVolume').value = p.volume || 0;
+            document.getElementById('editCategory').value = p.category || '';
+            new bootstrap.Modal(document.getElementById('editModal')).show();
+        };
+
+        // 删除产品
+        window.doDelete = function(tempId) {
+            const index = findProductIndex(tempId);
+            if (index < 0) return alert('找不到产品');
+            if (!confirm('确定删除此产品？')) return;
+            products.splice(index, 1);
+            products.forEach((p, i) => p._tempId = i);
+            hasChanges = true;
+            renderProducts();
+            updateSaveStatus();
+        };
+
+        // 显示JSON弹窗
+        window.showJson = function(tempId) {
+            const index = findProductIndex(tempId);
+            if (index < 0) return;
+            const p = products[index];
+            currentJsonTempId = tempId;
+            // 标准格式（不含category）
+            const json = {
+                name_cn: p.name_cn || '',
+                name_en: p.name_en || '',
+                specification_cn: p.specification_cn || '',
+                specification_en: p.specification_en || '',
+                price: p.price || 0,
+                currency: p.currency || 'CNY',
+                unit_cn: p.unit_cn || '',
+                unit_en: p.unit_en || '',
+                weight: p.weight || 0,
+                volume: p.volume || 0
+            };
+            document.getElementById('jsonContent').textContent = JSON.stringify(json, null, 2);
+            new bootstrap.Modal(document.getElementById('jsonModal')).show();
+        };
+
+        // 加载产品数据
+        async function loadProducts() {
+            const res = await fetch('/api/data/products');
+            products = await res.json();
+            products.forEach((p, i) => p._tempId = i);
+            renderProducts();
+            updateCategoryFilter();
+        }
+
+        // 渲染产品列表
+        function renderProducts() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const categoryFilter = document.getElementById('categoryFilter').value;
+
+            let filtered = products.filter(p => {
+                const name = (p.name_cn || p.name_en || '').toLowerCase();
+                const matchSearch = name.includes(search);
+                const matchCategory = !categoryFilter || getCategory(p) === categoryFilter;
+                return matchSearch && matchCategory;
+            });
+
+            document.getElementById('totalCount').textContent = filtered.length;
+            const container = document.getElementById('productList');
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="col-12 text-center text-muted py-5">没有找到产品</div>';
+                return;
+            }
+
+            container.innerHTML = filtered.map(p => {
+                const category = getCategory(p);
+                const badgeClass = categoryColors[category] || 'bg-light text-dark';
+                const categoryName = categoryNames[category] || category;
+                return `
+                <div class="col-md-4 col-lg-3 mb-3">
+                    <div class="card h-100 product-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge ${badgeClass} category-badge">${categoryName}</span>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-info" onclick="showJson(${p._tempId})">JSON</button>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="doEdit(${p._tempId})">Edit</button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="doDelete(${p._tempId})">Del</button>
+                                </div>
+                            </div>
+                            <h6 class="card-title mb-1">${p.name_cn || p.name_en || '未命名'}</h6>
+                            <small class="text-muted">${p.name_en || ''}</small>
+                            <p class="spec-text mt-2 mb-2">${(p.specification_en || p.specification_cn || '-').substring(0, 80)}</p>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-primary fw-bold">${p.currency === 'USD' ? '$' : '¥'}${(p.price || 0).toFixed(2)}</span>
+                                <small class="text-muted">${p.weight || 0}kg | ${p.unit_cn || '件'}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        // 更新分类筛选器
+        function updateCategoryFilter() {
+            const cats = [...new Set(products.map(p => getCategory(p)).filter(Boolean))];
+            const sel = document.getElementById('categoryFilter');
+            sel.innerHTML = '<option value="">所有分类</option>' + cats.sort().map(c => `<option value="${c}">${categoryNames[c] || c}</option>`).join('');
+        }
+
+        // 更新保存状态
+        function updateSaveStatus() {
+            const btn = document.getElementById('saveAllBtn');
+            btn.textContent = hasChanges ? '保存更改 *' : '保存到JSON';
+            btn.className = hasChanges ? 'btn btn-warning' : 'btn btn-success';
+        }
+
+        // 保存到服务器
+        document.getElementById('saveAllBtn').onclick = async function() {
+            if (!hasChanges) return;
+            // 按标准字段顺序保存（不含category）
+            const dataToSave = products.map(p => ({
+                name_cn: p.name_cn || '',
+                name_en: p.name_en || '',
+                specification_cn: p.specification_cn || '',
+                specification_en: p.specification_en || '',
+                price: p.price || 0,
+                currency: p.currency || 'CNY',
+                unit_cn: p.unit_cn || '',
+                unit_en: p.unit_en || '',
+                weight: p.weight || 0,
+                volume: p.volume || 0
+            }));
+            const res = await fetch('/api/data/products', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dataToSave, null, 2)
+            });
+            const result = await res.json();
+            if (result.success) {
+                hasChanges = false;
+                await loadProducts();
+                updateSaveStatus();
+                alert('保存成功！');
+            } else {
+                alert('保存失败: ' + result.error);
+            }
+        };
+
+        // 保存编辑
+        document.getElementById('saveEditBtn').onclick = function() {
+            const tempId = parseInt(document.getElementById('editTempId').value);
+            const index = findProductIndex(tempId);
+            if (index < 0) return;
+
+            const nameCn = document.getElementById('editNameCn').value.trim();
+            if (!nameCn) {
+                alert('中文名称是必填项！');
+                return;
+            }
+
+            products[index] = {
+                ...products[index],
+                name_cn: nameCn,
+                name_en: document.getElementById('editNameEn').value,
+                specification_cn: document.getElementById('editSpecCn').value,
+                specification_en: document.getElementById('editSpecEn').value,
+                price: parseFloat(document.getElementById('editPrice').value) || 0,
+                currency: document.getElementById('editCurrency').value,
+                unit_cn: document.getElementById('editUnitCn').value,
+                unit_en: document.getElementById('editUnitEn').value,
+                weight: parseFloat(document.getElementById('editWeight').value) || 0,
+                volume: parseFloat(document.getElementById('editVolume').value) || 0,
+                category: document.getElementById('editCategory').value || ''
+            };
+            hasChanges = true;
+            bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+            renderProducts();
+            updateCategoryFilter();
+            updateSaveStatus();
+        };
+
+        // 复制JSON按钮
+        document.getElementById('copyJsonBtn').onclick = function() {
+            const text = document.getElementById('jsonContent').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('已复制到剪贴板');
+            }).catch(err => {
+                console.error('复制失败:', err);
+            });
+        };
+
+        // 搜索和筛选
+        document.getElementById('searchInput').oninput = renderProducts;
+        document.getElementById('categoryFilter').onchange = renderProducts;
+
+        // 初始化
+        loadProducts();
+    </script>
+</body>
+</html>
