@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+
+{% block title %}分类管理{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-tags"></i> 分类管理</h4>
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#categoryModal" onclick="resetForm()">
+        <i class="bi bi-plus-lg"></i> 添加分类
+    </button>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>中文名称</th>
+                        <th>英文名称</th>
+                        <th>排序</th>
+                        <th style="width: 120px;">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="categoryBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="/products" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> 返回产品管理</a>
+</div>
+
+<!-- 分类编辑弹窗 -->
+<div class="modal fade" id="categoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="categoryModalTitle">添加分类</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="categoryId">
+                <div class="mb-3">
+                    <label class="form-label">中文名称 <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="categoryNameCn" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">英文名称</label>
+                    <input type="text" class="form-control" id="categoryNameEn">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">排序</label>
+                    <input type="number" class="form-control" id="categorySortOrder" value="0">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="saveCategoryBtn">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let categories = [];
+
+async function loadCategories() {
+    const res = await fetch('/api/categories');
+    categories = await res.json();
+    renderCategories();
+}
+
+function renderCategories() {
+    const tbody = document.getElementById('categoryBody');
+    if (categories.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">暂无分类</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = categories.map(c => `
+        <tr>
+            <td>${c.name_cn}</td>
+            <td>${c.name_en || '-'}</td>
+            <td>${c.sort_order}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary edit-btn" data-id="${c.id}"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${c.id}"><i class="bi bi-trash"></i></button>
+            </td>
+        </tr>
+    `).join('');
+
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => editCategory(parseInt(btn.dataset.id)));
+    });
+
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => deleteCategory(parseInt(btn.dataset.id)));
+    });
+}
+
+function editCategory(id) {
+    const category = categories.find(c => c.id === id);
+    if (!category) return;
+
+    document.getElementById('categoryModalTitle').textContent = '编辑分类';
+    document.getElementById('categoryId').value = category.id;
+    document.getElementById('categoryNameCn').value = category.name_cn;
+    document.getElementById('categoryNameEn').value = category.name_en || '';
+    document.getElementById('categorySortOrder').value = category.sort_order;
+    new bootstrap.Modal(document.getElementById('categoryModal')).show();
+}
+
+async function deleteCategory(id) {
+    if (!confirm('确定要删除这个分类吗？')) return;
+    await fetch(`/api/categories/${id}`, { method: 'DELETE' });
+    loadCategories();
+}
+
+async function saveCategory() {
+    const nameCn = document.getElementById('categoryNameCn');
+    if (!nameCn.value.trim()) {
+        nameCn.classList.add('is-invalid');
+        return;
+    }
+
+    const id = document.getElementById('categoryId').value;
+    const data = {
+        name_cn: nameCn.value.trim(),
+        name_en: document.getElementById('categoryNameEn').value.trim(),
+        sort_order: parseInt(document.getElementById('categorySortOrder').value) || 0
+    };
+
+    if (id) {
+        await fetch(`/api/categories/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+    } else {
+        await fetch('/api/categories', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+    }
+
+    bootstrap.Modal.getInstance(document.getElementById('categoryModal')).hide();
+    resetForm();
+    loadCategories();
+}
+
+function resetForm() {
+    document.getElementById('categoryModalTitle').textContent = '添加分类';
+    document.getElementById('categoryId').value = '';
+    document.getElementById('categoryNameCn').value = '';
+    document.getElementById('categoryNameEn').value = '';
+    document.getElementById('categorySortOrder').value = 0;
+    document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadCategories();
+    document.getElementById('saveCategoryBtn').addEventListener('click', saveCategory);
+});
+</script>
+{% endblock %}

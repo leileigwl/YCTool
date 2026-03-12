@@ -1,0 +1,535 @@
+{% extends 'base.html' %}
+
+{% block title %}报价生成{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- 左侧：产品库 - 紧凑网格+分类 -->
+    <div class="col-lg-2 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center py-2">
+                <h6 class="mb-0"><i class="bi bi-box-seam"></i> 产品库</h6>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary lang-btn active" data-lang="cn">中</button>
+                    <button class="btn btn-outline-primary lang-btn" data-lang="en">EN</button>
+                </div>
+            </div>
+            <div class="card-body p-2">
+                <input type="text" class="form-control form-control-sm mb-2" id="productSearch" placeholder="搜索产品...">
+                <select class="form-select form-select-sm mb-2" id="categoryFilter">
+                    <option value="">全部分类</option>
+                </select>
+                <div id="productList" style="max-height: 550px; overflow-y: auto;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右侧：报价单 -->
+    <div class="col-lg-10">
+        <!-- 买方信息 -->
+        <div class="card mb-3">
+            <div class="card-header py-2">
+                <h6 class="mb-0"><i class="bi bi-person"></i> 买方信息</h6>
+            </div>
+            <div class="card-body py-2">
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <label class="form-label small mb-1">客户 <span class="text-danger">*</span></label>
+                        <div class="input-group input-group-sm">
+                            <select class="form-select" id="customerSelect">
+                                <option value="">-- 选择客户 --</option>
+                            </select>
+                            <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#customerModal">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small mb-1">日期</label>
+                        <input type="date" class="form-control form-control-sm" id="quotationDate">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small mb-1">有效期至</label>
+                        <input type="date" class="form-control form-control-sm" id="validUntil">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small mb-1">币种</label>
+                        <select class="form-select form-select-sm" id="currencySelect">
+                            <option value="CNY">¥</option>
+                            <option value="USD">$</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-2 small text-muted" id="customerDetails" style="display: none;">
+                    <span>Tel: <span id="customerPhone"></span></span> |
+                    <span>Email: <span id="customerEmail"></span></span> |
+                    <span>Address: <span id="customerAddress"></span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 报价表 -->
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center py-2">
+                <h6 class="mb-0"><i class="bi bi-table"></i> 报价表</h6>
+                <button class="btn btn-outline-danger btn-sm" id="clearAllBtn">
+                    <i class="bi bi-trash"></i> 清空
+                </button>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered mb-0 text-center" id="quotationTable">
+                        <thead class="table-primary">
+                            <tr>
+                                <th style="width: 30px;">#</th>
+                                <th style="width: 55px;">图片</th>
+                                <th style="width: 80px;">商品名称</th>
+                                <th style="width: 25%;">规格</th>
+                                <th style="width: 80px;">单价</th>
+                                <th style="width: 55px;">数量</th>
+                                <th style="width: 50px;">单位</th>
+                                <th style="width: 80px;">金额</th>
+                                <th style="width: 70px;">重量(kg)</th>
+                                <th style="width: 70px;">体积(m³)</th>
+                                <th style="width: 35px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="quotationBody" class="align-middle">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer py-2 text-center">
+                <div class="row align-items-center justify-content-center">
+                    <div class="col-auto">
+                        <strong>合计: <span id="totalPrice">¥0</span></strong>
+                    </div>
+                    <div class="col-auto">
+                        <small>重量: <span id="totalWeight">0</span> kg</small>
+                    </div>
+                    <div class="col-auto">
+                        <small>体积: <span id="totalVolume">0</span> m³</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 备注 -->
+        <div class="card mb-3">
+            <div class="card-header py-2">
+                <h6 class="mb-0"><i class="bi bi-chat-text"></i> 备注</h6>
+            </div>
+            <div class="card-body py-2">
+                <textarea class="form-control form-control-sm" id="remarks" rows="2" placeholder="贸易条款、交货期、付款方式等..."></textarea>
+            </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-primary" id="saveBtn"><i class="bi bi-save"></i> 保存</button>
+            <button class="btn btn-danger" id="exportPdfBtn"><i class="bi bi-file-pdf"></i> 导出PDF</button>
+            <button class="btn btn-success" id="exportExcelBtn"><i class="bi bi-file-earmark-excel"></i> 导出Excel</button>
+        </div>
+    </div>
+</div>
+
+<!-- 快速添加客户弹窗 -->
+<div class="modal fade" id="customerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title">添加客户</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-2">
+                    <div class="col-6">
+                        <label class="form-label small">中文名称 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-sm" id="newCustomerNameCn">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small">英文名称</label>
+                        <input type="text" class="form-control form-control-sm" id="newCustomerNameEn">
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-6">
+                        <label class="form-label small">电话</label>
+                        <input type="text" class="form-control form-control-sm" id="newCustomerPhone">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small">邮箱</label>
+                        <input type="email" class="form-control form-control-sm" id="newCustomerEmail">
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small">地址</label>
+                    <input type="text" class="form-control form-control-sm" id="newCustomerAddress">
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary btn-sm" id="saveCustomerBtn">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentLang = 'cn';
+let products = [];
+let categories = [];
+let customers = [];
+let cart = [];
+
+// Helper functions
+function getCurrencySymbol(currency) {
+    return currency === 'CNY' ? '¥' : '$';
+}
+
+function getLocalized(obj, field) {
+    return currentLang === 'en' && obj[field + '_en'] ? obj[field + '_en'] : obj[field + '_cn'];
+}
+
+async function loadCategories() {
+    const res = await fetch('/api/categories');
+    categories = await res.json();
+    renderCategoryFilter();
+}
+
+async function loadProducts() {
+    const res = await fetch('/api/products');
+    products = await res.json();
+    renderProducts();
+}
+
+async function loadCustomers() {
+    const res = await fetch('/api/customers');
+    customers = await res.json();
+    renderCustomerSelect();
+}
+
+function renderCategoryFilter() {
+    const select = document.getElementById('categoryFilter');
+    select.innerHTML = `<option value="">全部分类</option>` +
+        categories.map(c => {
+            const name = currentLang === 'en' && c.name_en ? c.name_en : c.name_cn;
+            return `<option value="${c.id}">${name}</option>`;
+        }).join('');
+}
+
+function renderProducts(filter = '', categoryId = '') {
+    const container = document.getElementById('productList');
+    const currency = document.getElementById('currencySelect').value;
+    const symbol = getCurrencySymbol(currency);
+
+    let filtered = products;
+    if (filter) {
+        filtered = filtered.filter(p =>
+            p.name_cn.toLowerCase().includes(filter.toLowerCase()) ||
+            (p.name_en && p.name_en.toLowerCase().includes(filter.toLowerCase()))
+        );
+    }
+    if (categoryId) {
+        filtered = filtered.filter(p => p.category_id == categoryId);
+    }
+
+    // 按分类分组
+    const grouped = {};
+    filtered.forEach(p => {
+        const catName = p.category_name || (currentLang === 'en' ? 'Uncategorized' : '未分类');
+        if (!grouped[catName]) grouped[catName] = [];
+        grouped[catName].push(p);
+    });
+
+    if (Object.keys(grouped).length === 0) {
+        container.innerHTML = '<div class="text-center text-muted py-4 small">暂无产品</div>';
+        return;
+    }
+
+    let html = '';
+    for (const [catName, prods] of Object.entries(grouped)) {
+        html += `
+            <div class="mb-2">
+                <div class="bg-light px-2 py-1 small fw-bold border">${catName}</div>
+                <div class="row g-1 m-0">
+        `;
+        prods.forEach(p => {
+            const displayName = getLocalized(p, 'name');
+            html += `
+                <div class="col-6 p-1">
+                    <div class="border product-item text-center p-1 h-100" data-id="${p.id}" style="cursor:pointer; font-size:11px;">
+                        <img src="${p.image_path ? '/static/uploads/' + p.image_path : 'https://via.placeholder.com/60'}"
+                             class="img-fluid mb-1" style="height:60px; width:60px; object-fit:cover; border-radius:4px;">
+                        <div class="text-truncate small">${displayName}</div>
+                        <div class="text-primary small">${symbol}${p.price}</div>
+                    </div>
+                </div>
+            `;
+        });
+        html += `</div></div>`;
+    }
+    container.innerHTML = html;
+
+    document.querySelectorAll('.product-item').forEach(item => {
+        item.addEventListener('click', () => addToCart(parseInt(item.dataset.id)));
+    });
+}
+
+function renderCustomerSelect() {
+    const select = document.getElementById('customerSelect');
+    select.innerHTML = `<option value="">-- 选择客户 --</option>` +
+        customers.map(c => {
+            const name = currentLang === 'en' && c.name_en ? c.name_en : c.name_cn;
+            return `<option value="${c.id}">${name}</option>`;
+        }).join('');
+}
+
+function addToCart(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    const existing = cart.find(item => item.product_id === productId);
+    if (existing) {
+        existing.quantity++;
+    } else {
+        cart.push({
+            product_id: productId,
+            product: product,
+            quantity: 1,
+            price: product.price
+        });
+    }
+    renderCart();
+}
+
+function renderCart() {
+    const tbody = document.getElementById('quotationBody');
+    const currency = document.getElementById('currencySelect').value;
+    const symbol = getCurrencySymbol(currency);
+
+    if (cart.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="11" class="text-center text-muted py-4 small">点击左侧产品添加</td></tr>`;
+        updateTotals();
+        return;
+    }
+
+    tbody.innerHTML = cart.map((item, index) => {
+        const name = getLocalized(item.product, 'name');
+        const spec = getLocalized(item.product, 'specification') || '-';
+        const unit = getLocalized(item.product, 'unit');
+        const weight = item.product.weight || 0;
+        const volume = item.product.volume || 0;
+        const rowWeight = (weight * item.quantity).toFixed(2);
+        const rowVolume = (volume * item.quantity).toFixed(3);
+
+        return `
+        <tr>
+            <td class="align-middle">${index + 1}</td>
+            <td class="align-middle">
+                <img src="${item.product.image_path ? '/static/uploads/' + item.product.image_path : 'https://via.placeholder.com/40'}"
+                     style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+            </td>
+            <td class="align-middle small">${name}</td>
+            <td class="align-middle small">${spec}</td>
+            <td class="align-middle"><input type="number" class="form-control form-control-sm price-input text-center" value="${item.price}" step="0.01" data-index="${index}"></td>
+            <td class="align-middle"><input type="number" class="form-control form-control-sm qty-input text-center" value="${item.quantity}" min="1" data-index="${index}"></td>
+            <td class="align-middle small">${unit}</td>
+            <td class="align-middle">${symbol}${(item.price * item.quantity).toFixed(2)}</td>
+            <td class="align-middle small">${rowWeight}</td>
+            <td class="align-middle small">${rowVolume}</td>
+            <td class="align-middle"><button class="btn btn-outline-danger btn-sm remove-btn" data-index="${index}"><i class="bi bi-x"></i></button></td>
+        </tr>
+    `}).join('');
+
+    updateTotals();
+}
+
+function updateTotals() {
+    const currency = document.getElementById('currencySelect').value;
+    const symbol = getCurrencySymbol(currency);
+
+    let totalPrice = 0, totalWeight = 0, totalVolume = 0;
+    cart.forEach(item => {
+        totalPrice += item.price * item.quantity;
+        totalWeight += item.product.weight * item.quantity;
+        totalVolume += item.product.volume * item.quantity;
+    });
+
+    document.getElementById('totalPrice').textContent = symbol + totalPrice.toFixed(2);
+    document.getElementById('totalWeight').textContent = totalWeight.toFixed(2);
+    document.getElementById('totalVolume').textContent = totalVolume.toFixed(3);
+}
+
+async function saveQuotation() {
+    const customerId = document.getElementById('customerSelect').value;
+    const date = document.getElementById('quotationDate').value;
+    const validUntil = document.getElementById('validUntil').value;
+    const remarks = document.getElementById('remarks').value;
+    const currency = document.getElementById('currencySelect').value;
+
+    if (!customerId) {
+        alert('请选择客户');
+        return null;
+    }
+
+    if (cart.length === 0) {
+        alert('请添加产品');
+        return null;
+    }
+
+    const res = await fetch('/api/quotation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            customer_id: parseInt(customerId),
+            date: date,
+            valid_until: validUntil,
+            currency: currency,
+            remarks: remarks,
+            items: cart.map(item => ({
+                product_id: item.product_id,
+                quantity: item.quantity,
+                price: item.price
+            }))
+        })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+        alert('报价单已保存: ' + data.quotation_no);
+        return data.id;
+    }
+    return null;
+}
+
+async function exportPDF() {
+    const id = await saveQuotation();
+    if (id) {
+        window.open(`/api/quotation/${id}/pdf?lang=${currentLang}`, '_blank');
+    }
+}
+
+async function exportExcel() {
+    const id = await saveQuotation();
+    if (id) {
+        window.open(`/api/quotation/${id}/excel?lang=${currentLang}`, '_blank');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('quotationDate').value = today;
+
+    loadCategories();
+    loadProducts();
+    loadCustomers();
+
+    // Event delegation for cart table (fixes memory leak)
+    document.getElementById('quotationBody').addEventListener('change', (e) => {
+        if (e.target.classList.contains('qty-input')) {
+            const index = parseInt(e.target.dataset.index);
+            cart[index].quantity = parseInt(e.target.value) || 1;
+            renderCart();
+        } else if (e.target.classList.contains('price-input')) {
+            const index = parseInt(e.target.dataset.index);
+            cart[index].price = parseFloat(e.target.value) || 0;
+            renderCart();
+        }
+    });
+
+    document.getElementById('quotationBody').addEventListener('click', (e) => {
+        const btn = e.target.closest('.remove-btn');
+        if (btn) {
+            const index = parseInt(btn.dataset.index);
+            cart.splice(index, 1);
+            renderCart();
+        }
+    });
+
+    // 语言切换
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentLang = btn.dataset.lang;
+            document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderCategoryFilter();
+            renderProducts();
+            renderCustomerSelect();
+            renderCart();
+        });
+    });
+
+    document.getElementById('currencySelect').addEventListener('change', () => {
+        renderProducts();
+        updateTotals();
+    });
+
+    document.getElementById('productSearch').addEventListener('input', (e) => {
+        const catId = document.getElementById('categoryFilter').value;
+        renderProducts(e.target.value, catId);
+    });
+
+    document.getElementById('categoryFilter').addEventListener('change', (e) => {
+        const search = document.getElementById('productSearch').value;
+        renderProducts(search, e.target.value);
+    });
+
+    document.getElementById('customerSelect').addEventListener('change', (e) => {
+        const customer = customers.find(c => c.id === parseInt(e.target.value));
+        if (customer) {
+            document.getElementById('customerDetails').style.display = 'block';
+            document.getElementById('customerPhone').textContent = customer.phone || '-';
+            document.getElementById('customerEmail').textContent = customer.email || '-';
+            document.getElementById('customerAddress').textContent = customer.address || '-';
+        } else {
+            document.getElementById('customerDetails').style.display = 'none';
+        }
+    });
+
+    document.getElementById('saveCustomerBtn').addEventListener('click', async () => {
+        const nameCn = document.getElementById('newCustomerNameCn');
+        if (!nameCn.value.trim()) {
+            alert('请填写中文名称');
+            return;
+        }
+
+        const res = await fetch('/api/customers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name_cn: nameCn.value.trim(),
+                name_en: document.getElementById('newCustomerNameEn').value.trim(),
+                phone: document.getElementById('newCustomerPhone').value.trim(),
+                email: document.getElementById('newCustomerEmail').value.trim(),
+                address: document.getElementById('newCustomerAddress').value.trim()
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('customerModal')).hide();
+            await loadCustomers();
+            document.getElementById('customerSelect').value = data.id;
+            document.getElementById('customerSelect').dispatchEvent(new Event('change'));
+            document.getElementById('newCustomerNameCn').value = '';
+            document.getElementById('newCustomerNameEn').value = '';
+            document.getElementById('newCustomerPhone').value = '';
+            document.getElementById('newCustomerEmail').value = '';
+            document.getElementById('newCustomerAddress').value = '';
+        }
+    });
+
+    document.getElementById('clearAllBtn').addEventListener('click', () => {
+        cart = [];
+        renderCart();
+    });
+
+    document.getElementById('saveBtn').addEventListener('click', saveQuotation);
+    document.getElementById('exportPdfBtn').addEventListener('click', exportPDF);
+    document.getElementById('exportExcelBtn').addEventListener('click', exportExcel);
+});
+</script>
+{% endblock %}

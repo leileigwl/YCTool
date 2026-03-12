@@ -1,0 +1,353 @@
+{% extends 'base.html' %}
+
+{% block title %}产品管理{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-box-seam"></i> 产品管理</h4>
+    <div>
+        <a href="/categories" class="btn btn-outline-secondary btn-sm me-2"><i class="bi bi-tags"></i> 分类管理</a>
+        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#productModal" id="addProductBtn" onclick="resetForm()">
+            <i class="bi bi-plus-lg"></i> 添加产品
+        </button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover" id="productTable">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 60px;">图片</th>
+                        <th>商品名称</th>
+                        <th>规格</th>
+                        <th>分类</th>
+                        <th>单价</th>
+                        <th>单位</th>
+                        <th>重量(kg)</th>
+                        <th>体积(m³)</th>
+                        <th style="width: 120px;">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="productBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 产品编辑弹窗 -->
+<div class="modal fade" id="productModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="productModalTitle">添加产品</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="productId">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">产品图片</label>
+                            <input type="file" class="form-control form-control-sm" id="productImage" accept="image/*">
+                            <div id="imagePreview" class="mt-2"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">分类</label>
+                            <select class="form-select form-select-sm" id="productCategory">
+                                <option value="">-- 无分类 --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label">中文名称 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control form-control-sm" id="productNameCn" required>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label">英文名称</label>
+                                <input type="text" class="form-control form-control-sm" id="productNameEn">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12 mb-2">
+                                <label class="form-label">中文规格 <small class="text-muted">(可多行)</small></label>
+                                <textarea class="form-control form-control-sm" id="productSpecCn" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12 mb-2">
+                                <label class="form-label">英文规格 <small class="text-muted">(可多行)</small></label>
+                                <textarea class="form-control form-control-sm" id="productSpecEn" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-2">
+                                <label class="form-label">单价 <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control form-control-sm" id="productPrice" step="0.01" value="0" min="0">
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <label class="form-label">币种</label>
+                                <select class="form-select form-select-sm" id="productCurrency">
+                                    <option value="CNY">人民币(¥)</option>
+                                    <option value="USD">美元($)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <label class="form-label">分类</label>
+                                <select class="form-select form-select-sm" id="productCategory2">
+                                    <option value="">-- 无分类 --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label">中文单位</label>
+                                <input type="text" class="form-control form-control-sm" id="productUnitCn" value="件">
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label">英文单位</label>
+                                <input type="text" class="form-control form-control-sm" id="productUnitEn" value="pcs">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label">单个重量(kg)</label>
+                                <input type="number" class="form-control form-control-sm" id="productWeight" step="0.01" value="0">
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label">单个体积(m³)</label>
+                                <input type="number" class="form-control form-control-sm" id="productVolume" step="0.001" value="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="saveProductBtn">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let products = [];
+let categories = [];
+
+async function loadCategories() {
+    try {
+        const res = await fetch('/api/categories');
+        categories = await res.json();
+        renderCategorySelects();
+    } catch (e) {
+        console.error('加载分类失败:', e);
+    }
+}
+
+function renderCategorySelects() {
+    const options = `<option value="">-- 无分类 --</option>` +
+        categories.map(c => `<option value="${c.id}">${c.name_cn}</option>`).join('');
+    document.getElementById('productCategory').innerHTML = options;
+    document.getElementById('productCategory2').innerHTML = options;
+}
+
+async function loadProducts() {
+    try {
+        const res = await fetch('/api/products');
+        products = await res.json();
+        renderProducts();
+    } catch (e) {
+        console.error('加载产品失败:', e);
+    }
+}
+
+function renderProducts() {
+    const tbody = document.getElementById('productBody');
+    if (products.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4">暂无产品，点击"添加产品"开始</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = products.map(p => `
+        <tr>
+            <td><img src="${p.image_path ? '/static/uploads/' + p.image_path : 'https://via.placeholder.com/50'}"
+                     class="rounded" style="width: 50px; height: 50px; object-fit: cover;"></td>
+            <td>
+                <div>${p.name_cn}</div>
+                <small class="text-muted">${p.name_en || ''}</small>
+            </td>
+            <td style="max-width:150px;">
+                <div class="text-truncate" style="max-width:150px;" title="${p.specification_cn || ''}">${p.specification_cn || '-'}</div>
+            </td>
+            <td><small>${p.category_name || '-'}</small></td>
+            <td>${p.currency === 'USD' ? '$' : '¥'}${p.price}</td>
+            <td>${p.unit_cn}</td>
+            <td>${p.weight}</td>
+            <td>${p.volume}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary edit-btn" data-id="${p.id}"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${p.id}"><i class="bi bi-trash"></i></button>
+            </td>
+        </tr>
+    `).join('');
+
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => editProduct(parseInt(btn.dataset.id)));
+    });
+
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => deleteProduct(parseInt(btn.dataset.id)));
+    });
+}
+
+function editProduct(id) {
+    const product = products.find(p => p.id === id);
+    if (!product) return;
+
+    document.getElementById('productModalTitle').textContent = '编辑产品';
+    document.getElementById('productId').value = product.id;
+    document.getElementById('productNameCn').value = product.name_cn;
+    document.getElementById('productNameEn').value = product.name_en || '';
+    document.getElementById('productSpecCn').value = product.specification_cn || '';
+    document.getElementById('productSpecEn').value = product.specification_en || '';
+    document.getElementById('productPrice').value = product.price;
+    document.getElementById('productCurrency').value = product.currency;
+    document.getElementById('productUnitCn').value = product.unit_cn;
+    document.getElementById('productUnitEn').value = product.unit_en;
+    document.getElementById('productWeight').value = product.weight;
+    document.getElementById('productVolume').value = product.volume;
+    document.getElementById('productCategory2').value = product.category_id || '';
+
+    if (product.image_path) {
+        document.getElementById('imagePreview').innerHTML =
+            `<img src="/static/uploads/${product.image_path}" class="img-thumbnail" style="max-width: 100px;">`;
+    }
+
+    document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+    new bootstrap.Modal(document.getElementById('productModal')).show();
+}
+
+async function deleteProduct(id) {
+    if (!confirm('确定要删除这个产品吗？')) return;
+    try {
+        await fetch(`/api/products/${id}`, { method: 'DELETE' });
+        loadProducts();
+    } catch (e) {
+        alert('删除失败: ' + e.message);
+    }
+}
+
+async function saveProduct() {
+    const nameCn = document.getElementById('productNameCn');
+    if (!nameCn.value.trim()) {
+        nameCn.classList.add('is-invalid');
+        nameCn.focus();
+        return;
+    }
+    nameCn.classList.remove('is-invalid');
+
+    const id = document.getElementById('productId').value;
+    const data = {
+        name_cn: nameCn.value.trim(),
+        name_en: document.getElementById('productNameEn').value.trim(),
+        specification_cn: document.getElementById('productSpecCn').value.trim(),
+        specification_en: document.getElementById('productSpecEn').value.trim(),
+        price: parseFloat(document.getElementById('productPrice').value) || 0,
+        currency: document.getElementById('productCurrency').value,
+        unit_cn: document.getElementById('productUnitCn').value.trim() || '件',
+        unit_en: document.getElementById('productUnitEn').value.trim() || 'pcs',
+        weight: parseFloat(document.getElementById('productWeight').value) || 0,
+        volume: parseFloat(document.getElementById('productVolume').value) || 0,
+        category_id: document.getElementById('productCategory2').value || null
+    };
+
+    try {
+        let res;
+        if (id) {
+            res = await fetch(`/api/products/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+        } else {
+            res = await fetch('/api/products', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+        }
+
+        const result = await res.json();
+        if (!result.success) {
+            alert('保存失败');
+            return;
+        }
+
+        // 上传图片 - 编辑时用id，新建时用result.id
+        const imageInput = document.getElementById('productImage');
+        const productIdForImage = id || result.id;
+        if (imageInput.files.length > 0 && productIdForImage) {
+            const formData = new FormData();
+            formData.append('image', imageInput.files[0]);
+            const uploadRes = await fetch(`/api/products/${productIdForImage}/image`, {
+                method: 'POST',
+                body: formData
+            });
+            const uploadResult = await uploadRes.json();
+            if (!uploadResult.success) {
+                alert('图片上传失败');
+            }
+        }
+
+        bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
+        resetForm();
+        loadProducts();
+    } catch (e) {
+        alert('保存失败: ' + e.message);
+    }
+}
+
+function resetForm() {
+    document.getElementById('productModalTitle').textContent = '添加产品';
+    document.getElementById('productId').value = '';
+    document.getElementById('productNameCn').value = '';
+    document.getElementById('productNameEn').value = '';
+    document.getElementById('productSpecCn').value = '';
+    document.getElementById('productSpecEn').value = '';
+    document.getElementById('productPrice').value = 0;
+    document.getElementById('productCurrency').value = 'CNY';
+    document.getElementById('productUnitCn').value = '件';
+    document.getElementById('productUnitEn').value = 'pcs';
+    document.getElementById('productWeight').value = 0;
+    document.getElementById('productVolume').value = 0;
+    document.getElementById('productCategory2').value = '';
+    document.getElementById('productImage').value = '';
+    document.getElementById('imagePreview').innerHTML = '';
+    document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadCategories();
+    loadProducts();
+    document.getElementById('saveProductBtn').addEventListener('click', saveProduct);
+
+    document.getElementById('productImage').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                document.getElementById('imagePreview').innerHTML =
+                    `<img src="${ev.target.result}" class="img-thumbnail" style="max-width: 100px;">`;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+});
+</script>
+{% endblock %}

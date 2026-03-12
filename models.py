@@ -1,0 +1,77 @@
+from database import db
+from datetime import datetime
+
+class CompanyConfig(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name_cn = db.Column(db.String(200), default='')
+    name_en = db.Column(db.String(200), default='')
+    address_cn = db.Column(db.String(500), default='')
+    address_en = db.Column(db.String(500), default='')
+    phone = db.Column(db.String(50), default='')
+    email = db.Column(db.String(100), default='')
+    bank_name_cn = db.Column(db.String(200), default='')
+    bank_name_en = db.Column(db.String(200), default='')
+    bank_account = db.Column(db.String(100), default='')
+    bank_code = db.Column(db.String(50), default='')
+    payment_note_cn = db.Column(db.Text, default='')
+    payment_note_en = db.Column(db.Text, default='')
+    logo_path = db.Column(db.String(500), default='')
+
+class Category(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name_cn = db.Column(db.String(100), nullable=False)
+    name_en = db.Column(db.String(100), default='')
+    sort_order = db.Column(db.Integer, default=0)
+
+class Customer(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name_cn = db.Column(db.String(200), nullable=False)
+    name_en = db.Column(db.String(200), default='')
+    phone = db.Column(db.String(50), default='')
+    address = db.Column(db.String(500), default='')
+    email = db.Column(db.String(100), default='')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Product(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name_cn = db.Column(db.String(200), nullable=False)
+    name_en = db.Column(db.String(200), default='')
+    image_path = db.Column(db.String(500), default='')
+    specification_cn = db.Column(db.Text, default='')
+    specification_en = db.Column(db.Text, default='')
+    price = db.Column(db.Float, default=0)
+    currency = db.Column(db.String(10), default='CNY')
+    unit_cn = db.Column(db.String(20), default='件')
+    unit_en = db.Column(db.String(20), default='pcs')
+    weight = db.Column(db.Float, default=0)
+    volume = db.Column(db.Float, default=0)
+    category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
+    category = db.relationship('Category', backref='products')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class Quotation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    quotation_no = db.Column(db.String(50), unique=True, nullable=False)
+    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'))
+    customer = db.relationship('Customer', backref='quotations')
+    date = db.Column(db.Date, nullable=False)
+    valid_until = db.Column(db.Date)
+    currency = db.Column(db.String(10), default='CNY')
+    total_price = db.Column(db.Float, default=0)
+    total_weight = db.Column(db.Float, default=0)
+    total_volume = db.Column(db.Float, default=0)
+    remarks = db.Column(db.Text, default='')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    items = db.relationship('QuotationItem', backref='quotation', cascade='all, delete-orphan')
+
+class QuotationItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    quotation_id = db.Column(db.Integer, db.ForeignKey('quotation.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'))
+    product = db.relationship('Product')
+    quantity = db.Column(db.Integer, default=1)
+    price = db.Column(db.Float, default=0)
+    subtotal = db.Column(db.Float, default=0)
+    weight = db.Column(db.Float, default=0)
+    volume = db.Column(db.Float, default=0)

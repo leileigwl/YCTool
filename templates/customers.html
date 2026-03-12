@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+
+{% block title %}客户管理{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-people"></i> 客户管理</h4>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#customerModal" id="addCustomerBtn" onclick="resetForm()">
+        <i class="bi bi-plus-lg"></i> 添加客户
+    </button>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover" id="customerTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>客户名称</th>
+                        <th>电话</th>
+                        <th>邮箱</th>
+                        <th>地址</th>
+                        <th style="width: 120px;">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="customerBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 客户编辑弹窗 -->
+<div class="modal fade" id="customerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="customerModalTitle">添加客户</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="customerId">
+                <div class="row mb-2">
+                    <div class="col-6">
+                        <label class="form-label">中文名称 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-sm" id="customerNameCn" required>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">英文名称</label>
+                        <input type="text" class="form-control form-control-sm" id="customerNameEn">
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">电话</label>
+                    <input type="text" class="form-control form-control-sm" id="customerPhone">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">邮箱</label>
+                    <input type="email" class="form-control form-control-sm" id="customerEmail">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">地址</label>
+                    <input type="text" class="form-control form-control-sm" id="customerAddress">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="saveCustomerBtn">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let customers = [];
+
+async function loadCustomers() {
+    try {
+        const res = await fetch('/api/customers');
+        customers = await res.json();
+        renderCustomers();
+    } catch (e) {
+        console.error('加载客户失败:', e);
+    }
+}
+
+function renderCustomers() {
+    const tbody = document.getElementById('customerBody');
+    if (customers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">暂无客户，点击"添加客户"开始</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = customers.map(c => `
+        <tr>
+            <td>
+                <div>${c.name_cn}</div>
+                <small class="text-muted">${c.name_en || ''}</small>
+            </td>
+            <td>${c.phone || '-'}</td>
+            <td>${c.email || '-'}</td>
+            <td>${c.address || '-'}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary edit-btn" data-id="${c.id}"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${c.id}"><i class="bi bi-trash"></i></button>
+            </td>
+        </tr>
+    `).join('');
+
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => editCustomer(parseInt(btn.dataset.id)));
+    });
+
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => deleteCustomer(parseInt(btn.dataset.id)));
+    });
+}
+
+function editCustomer(id) {
+    const customer = customers.find(c => c.id === id);
+    if (!customer) return;
+
+    document.getElementById('customerModalTitle').textContent = '编辑客户';
+    document.getElementById('customerId').value = customer.id;
+    document.getElementById('customerNameCn').value = customer.name_cn;
+    document.getElementById('customerNameEn').value = customer.name_en || '';
+    document.getElementById('customerPhone').value = customer.phone || '';
+    document.getElementById('customerEmail').value = customer.email || '';
+    document.getElementById('customerAddress').value = customer.address || '';
+    document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+}
+
+async function deleteCustomer(id) {
+    if (!confirm('确定要删除这个客户吗？')) return;
+    try {
+        await fetch(`/api/customers/${id}`, { method: 'DELETE' });
+        loadCustomers();
+    } catch (e) {
+        alert('删除失败: ' + e.message);
+    }
+}
+
+async function saveCustomer() {
+    const nameCn = document.getElementById('customerNameCn');
+    if (!nameCn.value.trim()) {
+        nameCn.classList.add('is-invalid');
+        nameCn.focus();
+        return;
+    }
+    nameCn.classList.remove('is-invalid');
+
+    const id = document.getElementById('customerId').value;
+    const data = {
+        name_cn: nameCn.value.trim(),
+        name_en: document.getElementById('customerNameEn').value.trim(),
+        phone: document.getElementById('customerPhone').value.trim(),
+        email: document.getElementById('customerEmail').value.trim(),
+        address: document.getElementById('customerAddress').value.trim()
+    };
+
+    try {
+        if (id) {
+            await fetch(`/api/customers/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+        } else {
+            const res = await fetch('/api/customers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            if (!result.success) {
+                alert('保存失败');
+                return;
+            }
+        }
+
+        bootstrap.Modal.getInstance(document.getElementById('customerModal')).hide();
+        resetForm();
+        loadCustomers();
+    } catch (e) {
+        alert('保存失败: ' + e.message);
+    }
+}
+
+function resetForm() {
+    document.getElementById('customerModalTitle').textContent = '添加客户';
+    document.getElementById('customerId').value = '';
+    document.getElementById('customerNameCn').value = '';
+    document.getElementById('customerNameEn').value = '';
+    document.getElementById('customerPhone').value = '';
+    document.getElementById('customerEmail').value = '';
+    document.getElementById('customerAddress').value = '';
+    document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadCustomers();
+    document.getElementById('saveCustomerBtn').addEventListener('click', saveCustomer);
+});
+</script>
+{% endblock %}
