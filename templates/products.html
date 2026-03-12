@@ -413,5 +413,95 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+// 下载JSON模板
+async function downloadTemplate() {
+    try {
+        const res = await fetch('/api/products/template');
+        const template = await res.json();
+        const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'products_template.json';
+        a.click();
+        URL.revokeObjectURL(url);
+    } catch (e) {
+        alert('下载模板失败: ' + e.message);
+    }
+}
+
+// 批量导入产品
+async function importProducts() {
+    const jsonStr = document.getElementById('importJson').value.trim();
+    const resultDiv = document.getElementById('importResult');
+
+    if (!jsonStr) {
+        resultDiv.className = 'alert alert-warning';
+        resultDiv.textContent = '请输入JSON数据';
+        resultDiv.classList.remove('d-none');
+        return;
+    }
+
+    let data;
+    try {
+        data = JSON.parse(jsonStr);
+    } catch (e) {
+        resultDiv.className = 'alert alert-danger';
+        resultDiv.textContent = 'JSON格式错误: ' + e.message;
+        resultDiv.classList.remove('d-none');
+        return;
+    }
+
+    if (!Array.isArray(data)) {
+        resultDiv.className = 'alert alert-danger';
+        resultDiv.textContent = '数据必须是JSON数组格式';
+        resultDiv.classList.remove('d-none');
+        return;
+    }
+
+    resultDiv.className = 'alert alert-info';
+    resultDiv.textContent = '正在导入...';
+    resultDiv.classList.remove('d-none');
+
+    try {
+        const res = await fetch('/api/products/import', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: jsonStr
+        });
+        const result = await res.json();
+
+        if (result.success) {
+            let msg = `导入完成！成功: ${result.imported} 条`;
+            if (result.failed > 0) {
+                msg += `，失败: ${result.failed} 条`;
+                resultDiv.className = 'alert alert-warning';
+                // 显示失败详情
+                const failedDetails = result.results.failed.map(f =>
+                    `第${f.index + 1}条: ${f.error}`
+                ).join('\n');
+                msg += `\n\n失败详情:\n${failedDetails}`;
+            } else {
+                resultDiv.className = 'alert alert-success';
+            }
+            resultDiv.textContent = msg;
+
+            // 刷新产品列表
+            loadProducts();
+
+            // 如果全部成功，清空输入框
+            if (result.failed === 0) {
+                document.getElementById('importJson').value = '';
+            }
+        } else {
+            resultDiv.className = 'alert alert-danger';
+            resultDiv.textContent = result.error || '导入失败';
+        }
+    } catch (e) {
+        resultDiv.className = 'alert alert-danger';
+        resultDiv.textContent = '导入失败: ' + e.message;
+    }
+}
 </script>
 {% endblock %}
