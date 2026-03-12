@@ -6,6 +6,9 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h4><i class="bi bi-box-seam"></i> 产品管理</h4>
     <div>
+        <button class="btn btn-outline-success btn-sm me-2" data-bs-toggle="modal" data-bs-target="#importModal">
+            <i class="bi bi-upload"></i> 批量导入
+        </button>
         <a href="/categories" class="btn btn-outline-secondary btn-sm me-2"><i class="bi bi-tags"></i> 分类管理</a>
         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#productModal" id="addProductBtn" onclick="resetForm()">
             <i class="bi bi-plus-lg"></i> 添加产品
@@ -129,6 +132,67 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                 <button type="button" class="btn btn-primary" id="saveProductBtn">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 批量导入弹窗 -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">批量导入产品</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">JSON数据 <small class="text-muted">(粘贴JSON数组)</small></label>
+                    <textarea class="form-control" id="importJson" rows="10" placeholder='[
+  {
+    "name_cn": "产品名称",
+    "name_en": "Product Name",
+    "price": 100.00,
+    "unit_cn": "件",
+    "unit_en": "pcs",
+    "weight": 1.5,
+    "volume": 0.01
+  }
+]'></textarea>
+                </div>
+                <div class="mb-3">
+                    <button class="btn btn-outline-secondary btn-sm" onclick="downloadTemplate()">
+                        <i class="bi bi-download"></i> 下载模板
+                    </button>
+                    <small class="text-muted ms-2">点击下载JSON模板文件</small>
+                </div>
+                <div id="importResult" class="alert d-none"></div>
+                <div class="mt-3">
+                    <h6>字段说明：</h6>
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light">
+                            <tr><th>字段</th><th>必填</th><th>说明</th><th>默认值</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>name_cn</code></td><td class="text-danger">是</td><td>中文名称</td><td>-</td></tr>
+                            <tr><td><code>name_en</code></td><td>否</td><td>英文名称</td><td>空</td></tr>
+                            <tr><td><code>specification_cn</code></td><td>否</td><td>中文规格</td><td>空</td></tr>
+                            <tr><td><code>specification_en</code></td><td>否</td><td>英文规格</td><td>空</td></tr>
+                            <tr><td><code>price</code></td><td>否</td><td>单价</td><td>0</td></tr>
+                            <tr><td><code>currency</code></td><td>否</td><td>币种(CNY/USD)</td><td>CNY</td></tr>
+                            <tr><td><code>unit_cn</code></td><td>否</td><td>中文单位</td><td>件</td></tr>
+                            <tr><td><code>unit_en</code></td><td>否</td><td>英文单位</td><td>pcs</td></tr>
+                            <tr><td><code>weight</code></td><td>否</td><td>重量(kg)</td><td>0</td></tr>
+                            <tr><td><code>volume</code></td><td>否</td><td>体积(m³)</td><td>0</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-success" id="importBtn" onclick="importProducts()">
+                    <i class="bi bi-upload"></i> 导入
+                </button>
             </div>
         </div>
     </div>

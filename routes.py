@@ -242,6 +242,89 @@ def register_routes(app):
 
         return jsonify({'error': 'Invalid file type'}), 400
 
+    # ===== 产品批量导入 API =====
+    @app.route('/api/products/import', methods=['POST'])
+    def import_products():
+        """批量导入产品 - JSON格式"""
+        data = request.json
+
+        if not isinstance(data, list):
+            return jsonify({'error': '数据必须是JSON数组格式'}), 400
+
+        results = {
+            'success': [],
+            'failed': [],
+            'total': len(data)
+        }
+
+        for idx, item in enumerate(data):
+            # 验证必填字段
+            if not item.get('name_cn'):
+                results['failed'].append({
+                    'index': idx,
+                    'data': item,
+                    'error': 'name_cn (中文名称) 是必填字段'
+                })
+                continue
+
+            try:
+                # 创建产品
+                product = Product(
+                    name_cn=item.get('name_cn', ''),
+                    name_en=item.get('name_en', ''),
+                    specification_cn=item.get('specification_cn', ''),
+                    specification_en=item.get('specification_en', ''),
+                    price=float(item.get('price', 0)),
+                    currency=item.get('currency', 'CNY'),
+                    unit_cn=item.get('unit_cn', '件'),
+                    unit_en=item.get('unit_en', 'pcs'),
+                    weight=float(item.get('weight', 0)),
+                    volume=float(item.get('volume', 0)),
+                    category_id=item.get('category_id')
+                )
+                db.session.add(product)
+                db.session.flush()  # 获取ID
+
+                results['success'].append({
+                    'index': idx,
+                    'id': product.id,
+                    'name_cn': product.name_cn
+                })
+            except Exception as e:
+                results['failed'].append({
+                    'index': idx,
+                    'data': item,
+                    'error': str(e)
+                })
+
+        db.session.commit()
+        return jsonify({
+            'success': True,
+            'imported': len(results['success']),
+            'failed': len(results['failed']),
+            'results': results
+        })
+
+    @app.route('/api/products/template', methods=['GET'])
+    def get_product_template():
+        """获取产品导入模板"""
+        template = [
+            {
+                "name_cn": "产品中文名称（必填）",
+                "name_en": "Product English Name",
+                "specification_cn": "中文规格说明",
+                "specification_en": "English Specification",
+                "price": 100.00,
+                "currency": "CNY",
+                "unit_cn": "件",
+                "unit_en": "pcs",
+                "weight": 1.5,
+                "volume": 0.01,
+                "category_id": null
+            }
+        ]
+        return jsonify(template)
+
     # ===== 报价单 API =====
     @app.route('/api/quotation', methods=['POST'])
     def create_quotation():
