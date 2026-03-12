@@ -96,7 +96,7 @@ def generate_pdf(quotation_id, lang='cn'):
                                         textColor=colors.black, alignment=0, leading=12)
     bill_value_style = ParagraphStyle('BillValue', fontName=CHINESE_FONT, fontSize=9,
                                         textColor=HEADER_BG, alignment=0, leading=12)
-    header_style = ParagraphStyle('Header', fontName=CHINESE_FONT, fontSize=7,
+    header_style = ParagraphStyle('Header', fontName=CHINESE_FONT, fontSize=8,
                                    textColor=HEADER_TEXT, alignment=1, leading=10, wordWrap='CJK')
     cell_style = ParagraphStyle('Cell', fontName=CHINESE_FONT, fontSize=7, alignment=1, leading=9)
     cell_left_style = ParagraphStyle('CellLeft', fontName=CHINESE_FONT, fontSize=7, alignment=0, leading=9)
@@ -114,8 +114,8 @@ def generate_pdf(quotation_id, lang='cn'):
     # ===== 列宽定义 - 确保表头文字横向显示在一行 =====
     # 序号:图片:名称:规格:单价:数量:单位:金额:重量:体积
     # 每列都要足够宽让文字横向显示
-    col_widths = [1.0*cm, 2.5*cm, 2.0*cm, 4.5*cm, 1.8*cm, 1.2*cm, 1.2*cm, 1.8*cm, 1.6*cm, 1.6*cm]
-    # 总和约19.2cm
+    col_widths = [1.2*cm, 2.5*cm, 2.2*cm, 4.0*cm, 1.8*cm, 1.4*cm, 1.2*cm, 1.8*cm, 1.6*cm, 1.6*cm]
+    # 总和约19.3cm
 
     # ===== 构建表格数据 =====
     table_data = []
@@ -257,7 +257,7 @@ def generate_pdf(quotation_id, lang='cn'):
         ('FONTNAME', (0, 0), (-1, -1), CHINESE_FONT),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('GRID', (0, 0), (-1, -1), 0.5, BORDER_COLOR),
+        ('INNERGRID', (0, 0), (-1, -1), 0.8, BORDER_COLOR),  # 内部网格线（竖线和横线）
         ('BOX', (0, 0), (-1, -1), 1, BORDER_COLOR),
         ('TOPPADDING', (0, 0), (-1, -1), 5),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
