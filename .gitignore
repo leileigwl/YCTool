@@ -35,6 +35,9 @@ data/uploads/**/*.gif
 *.tar.gz
 *.bak
 
+# Data base folder
+Data_base/
+
 # IDE
 .idea/
 .vscode/
