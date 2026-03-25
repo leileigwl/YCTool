@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  yctool:
+    build: .
+    container_name: yctool
+    restart: always
+    ports:
+      - "5002:5002"
+    volumes:
+      # 持久化数据库
+      - ./quotation.db:/app/quotation.db
+      # 持久化上传文件
+      - ./static/uploads:/app/static/uploads
+    environment:
+      - TZ=Asia/Shanghai

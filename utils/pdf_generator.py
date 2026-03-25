@@ -11,19 +11,30 @@ from models import Quotation, CompanyConfig
 
 # 注册中文字体
 def register_chinese_font():
+    # 获取项目根目录下的字体路径
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     font_paths = [
+        # 项目内置字体（优先）
+        os.path.join(project_root, 'static', 'fonts', 'SourceHanSansCN-Regular.otf'),
+        # macOS 系统字体
         '/System/Library/Fonts/PingFang.ttc',
         '/System/Library/Fonts/STHeiti Light.ttc',
         '/System/Library/Fonts/Hiragino Sans GB.ttc',
         '/Library/Fonts/Arial Unicode.ttf',
+        # Linux 常见字体路径
+        '/usr/share/fonts/truetype/wqy/wqy-microhei.ttc',
+        '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
+        '/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc',
     ]
     for path in font_paths:
         if os.path.exists(path):
             try:
                 pdfmetrics.registerFont(TTFont('Chinese', path))
                 return 'Chinese'
-            except:
+            except Exception as e:
+                print(f"Failed to load font {path}: {e}")
                 continue
+    print("WARNING: No Chinese font found, using Helvetica (Chinese characters will not display)")
     return 'Helvetica'
 
 CHINESE_FONT = register_chinese_font()
@@ -63,7 +74,7 @@ def generate_pdf(quotation_id, lang='cn'):
     if lang == 'en':
         texts = {
             'quotation': 'QUOTATION', 'date': 'Date', 'valid_until': 'Valid Until',
-            'bill_to': 'Bill To', 'no': 'No.', 'image': 'Image',
+            'bill_to': 'Bill To', 'contact': 'Contact', 'no': 'No.', 'image': 'Image',
             'description': 'Description', 'specification': 'Specification',
             'unit_price': 'Unit Price', 'quantity': 'Qty', 'unit': 'Unit',
             'amount': 'Amount', 'weight': 'Weight(kg)', 'volume': 'Volume(m³)',
@@ -73,7 +84,7 @@ def generate_pdf(quotation_id, lang='cn'):
     else:
         texts = {
             'quotation': '报价单', 'date': '日期', 'valid_until': '有效期至',
-            'bill_to': '买方信息', 'no': '序号', 'image': '图片',
+            'bill_to': '买方信息', 'contact': '联系人', 'no': '序号', 'image': '图片',
             'description': '商品名称', 'specification': '规格',
             'unit_price': '单价', 'quantity': '数量', 'unit': '单位',
             'amount': '金额', 'weight': '重量(kg)', 'volume': '体积(m³)',
@@ -98,8 +109,8 @@ def generate_pdf(quotation_id, lang='cn'):
                                         textColor=HEADER_BG, alignment=1, leading=12)
     footer_style = ParagraphStyle('Footer', fontName=CHINESE_FONT, fontSize=8, alignment=0, leading=10)
 
-    company_name = get_localized(company, 'name', lang)
-    company_name_en = company.name_en if company.name_en else ''
+    company_name_cn = company.name_cn or ''
+    company_name_en = company.name_en or ''
     customer = quotation.customer
 
     # ===== 列宽定义 =====
@@ -107,9 +118,14 @@ def generate_pdf(quotation_id, lang='cn'):
     total_width = sum(col_widths)
 
     # ===== 表格1: 公司名称行 =====
-    company_full_name = f"{company_name}"
-    if company_name_en:
-        company_full_name = f"{company_name}<br/>{company_name_en}"
+    # 中文版：只显示中文名
+    # 英文版：只显示英文名
+    if lang == 'en':
+        company_full_name = company_name_en or company_name_cn
+    else:
+        company_full_name = company_name_cn
+
+    company_name = company_name_en if lang == 'en' and company_name_en else company_name_cn
 
     company_data = [[Paragraph(f'<b>{company_full_name}</b>', company_style)]]
     company_table = Table(company_data, colWidths=[total_width])
@@ -162,7 +178,7 @@ def generate_pdf(quotation_id, lang='cn'):
         if customer.email:
             contacts.append(customer.email)
         contact_str = ' / '.join(contacts) if contacts else '-'
-        contact_data = [[Paragraph(f'<b>联系人</b>: {contact_str}', info_value_style)]]
+        contact_data = [[Paragraph(f'<b>{texts["contact"]}</b>: {contact_str}', info_value_style)]]
         contact_table = Table(contact_data, colWidths=[total_width])
         contact_table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (-1, -1), CHINESE_FONT),

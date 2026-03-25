@@ -9,12 +9,18 @@ ENV/
 
 # Database
 *.db
+*.db.backup
 
 # Generated files
 static/uploads/*.pdf
 static/uploads/*.xlsx
 static/uploads/products/
 static/uploads/quotations/
+
+# Product images (敏感数据)
+static/uploads/product_*.png
+static/uploads/product_*.jpg
+static/uploads/product_*.jpeg
 
 # Data uploads (原始文件)
 data/uploads/**/*.pdf
@@ -24,6 +30,10 @@ data/uploads/**/*.png
 data/uploads/**/*.jpg
 data/uploads/**/*.jpeg
 data/uploads/**/*.gif
+
+# Backup and temp files
+*.tar.gz
+*.bak
 
 # IDE
 .idea/

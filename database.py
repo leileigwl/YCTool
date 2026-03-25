@@ -31,8 +31,8 @@ def create_app():
         # 初始化公司配置
         if not CompanyConfig.query.first():
             default_config = CompanyConfig(
-                name_cn='远成国际进出口贸易有限公司',
-                name_en='Yuan Cheng International Import & Export Co., Ltd',
+                name_cn='义乌耀灿太阳能科技有限公司',
+                name_en='YAOCAN SOLAR ENERGY SCIENCE AND TECHNOLOGY  Co., Ltd',
                 address_cn='',
                 address_en='',
                 phone='',
