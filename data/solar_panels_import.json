@@ -1,0 +1,110 @@
+[
+  {
+    "name_cn": "太阳能板 100W",
+    "name_en": "Solar Panel 100W",
+    "specification_cn": "尺寸: 1200×580×30mm",
+    "specification_en": "Size: 1200×580×30mm",
+    "price": 105,
+    "currency": "CNY",
+    "unit_cn": "片",
+    "unit_en": "pcs",
+    "weight": 6.5,
+    "volume": 0.02255
+  },
+  {
+    "name_cn": "太阳能板 150W",
+    "name_en": "Solar Panel 150W",
+    "specification_cn": "尺寸: 1480×680×30mm",
+    "specification_en": "Size: 1480×680×30mm",
+    "price": 150,
+    "currency": "CNY",
+    "unit_cn": "片",
+    "unit_en": "pcs",
+    "weight": 8.2,
+    "volume": 0.032607
+  },
+  {
+    "name_cn": "太阳能板 200W",
+    "name_en": "Solar Panel 200W",
+    "specification_cn": "尺寸: 1530×780×30mm",
+    "specification_en": "Size: 1530×780×30mm",
+    "price": 180,
+    "currency": "CNY",
+    "unit_cn": "片",
+    "unit_en": "pcs",
+    "weight": 10.5,
+    "volume": 0.038666
+  },
+  {
+    "name_cn": "太阳能板 250W",
+    "name_en": "Solar Panel 250W",
+    "specification_cn": "尺寸: 1640×994×35mm",
+    "specification_en": "Size: 1640×994×35mm",
+    "price": 240,
+    "currency": "CNY",
+    "unit_cn": "片",
+    "unit_en": "pcs",
+    "weight": 14.8,
+    "volume": 0.06162
+  },
+  {
+    "name_cn": "太阳能板 300W",
+    "name_en": "Solar Panel 300W",
+    "specification_cn": "尺寸: 1956×994×35mm",
+    "specification_en": "Size: 1956×994×35mm",
+    "price": 280,
+    "currency": "CNY",
+    "unit_cn": "片",
+    "unit_en": "pcs",
+    "weight": 17.5,
+    "volume": 0.073493
+  },
+  {
+    "name_cn": "太阳能板 450W",
+    "name_en": "Solar Panel 450W",
+    "specification_cn": "尺寸: 1722×1134×30mm",
+    "specification_en": "Size: 1722×1134×30mm",
+    "price": 315,
+    "currency": "CNY",
+    "unit_cn": "片",
+    "unit_en": "pcs",
+    "weight": 18.2,
+    "volume": 0.063269
+  },
+  {
+    "name_cn": "太阳能板 580W",
+    "name_en": "Solar Panel 580W",
+    "specification_cn": "尺寸: 2278×1134×30mm",
+    "specification_en": "Size: 2278×1134×30mm",
+    "price": 400,
+    "currency": "CNY",
+    "unit_cn": "片",
+    "unit_en": "pcs",
+    "weight": 23.5,
+    "volume": 0.083697
+  },
+  {
+    "name_cn": "太阳能板 620W",
+    "name_en": "Solar Panel 620W",
+    "specification_cn": "尺寸: 2382×1134×30mm",
+    "specification_en": "Size: 2382×1134×30mm",
+    "price": 450,
+    "currency": "CNY",
+    "unit_cn": "片",
+    "unit_en": "pcs",
+    "weight": 24.8,
+    "volume": 0.087518
+  },
+  {
+    "name_cn": "太阳能板 715W",
+    "name_en": "Solar Panel 715W",
+    "specification_cn": "尺寸: 2382×1303×33mm",
+    "specification_en": "Size: 2382×1303×33mm",
+    "price": 490,
+    "currency": "CNY",
+    "unit_cn": "片",
+    "unit_en": "pcs",
+    "weight": 28.5,
+    "volume": 0.110618
+  }
+]

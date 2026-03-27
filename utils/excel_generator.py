@@ -146,6 +146,10 @@ def generate_excel(quotation_id, lang='cn'):
 
     # 数据行
     for idx, item in enumerate(quotation.items, 1):
+        # 检查产品是否存在
+        if item.product is None:
+            continue
+
         name = item.product.name_en if lang == 'en' and item.product.name_en else item.product.name_cn
         spec = item.product.specification_en if lang == 'en' and item.product.specification_en else item.product.specification_cn
         unit = item.product.unit_en if lang == 'en' and item.product.unit_en else item.product.unit_cn
