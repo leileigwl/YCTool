@@ -7,9 +7,12 @@ __pycache__/
 venv/
 ENV/
 
-# Database
-*.db
+# Database (备份文件忽略，主数据库保留)
 *.db.backup
+*.db.after_import
+*.db.before_cloud
+*.db.local_backup
+quotation.db.backup
 
 # Generated files
 static/uploads/*.pdf
