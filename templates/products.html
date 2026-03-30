@@ -252,7 +252,7 @@ function renderProducts() {
                 <small class="text-muted">${p.name_en || ''}</small>
             </td>
             <td style="max-width:150px;">
-                <div class="text-truncate" style="max-width:150px;" title="${p.specification_cn || ''}">${p.specification_cn || '-'}</div>
+                <div class="text-truncate" style="max-width:150px;" title="${p.specification_cn || p.specification_en || ''}">${p.specification_cn || p.specification_en || '-'}</div>
             </td>
             <td><small>${p.category_name || '-'}</small></td>
             <td>${p.currency === 'USD' ? '$' : '¥'}${p.price}</td>

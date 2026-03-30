@@ -1,10 +1,41 @@
 import os
+import re
 from datetime import date, datetime
 from flask import render_template, request, jsonify, send_file
 from werkzeug.utils import secure_filename
 from database import db, allowed_file, create_app
 from models import CompanyConfig, Customer, Product, Quotation, QuotationItem, Category
 from sqlalchemy.orm import joinedload
+
+def extract_power(name):
+    """从名称中提取功率数值用于排序"""
+    match = re.search(r'(\d+(?:\.\d+)?)\s*(kW|kw|kwh|KWH|W|w)', name, re.IGNORECASE)
+    if match:
+        power = float(match.group(1))
+        unit = match.group(2).lower()
+        if unit == 'w':
+            power = power / 1000
+        return power
+    return 0
+
+def get_brand(name):
+    """获取品牌用于排序"""
+    if '德业' in name or 'Deye' in name:
+        return 1
+    elif '古瑞瓦特' in name or 'Growatt' in name:
+        return 2
+    elif '索瑞德' in name or 'Sorotec' in name:
+        return 3
+    elif '美标' in name:
+        return 4
+    else:
+        return 5
+
+def get_phase_order(name):
+    """单相排在前面"""
+    if '单相' in name:
+        return 0
+    return 1
 
 def register_routes(app):
 
@@ -179,8 +210,10 @@ def register_routes(app):
     # ===== 产品 API =====
     @app.route('/api/products', methods=['GET'])
     def get_products():
-        products = Product.query.options(joinedload(Product.category)).order_by(Product.created_at.desc()).all()
-        return jsonify([{
+        products = Product.query.options(joinedload(Product.category)).all()
+
+        # 转换为字典列表
+        product_list = [{
             'id': p.id,
             'name_cn': p.name_cn,
             'name_en': p.name_en,
@@ -195,7 +228,28 @@ def register_routes(app):
             'volume': p.volume,
             'category_id': p.category_id,
             'category_name': p.category.name_cn if p.category else ''
-        } for p in products])
+        } for p in products]
+
+        # 排序：按分类，然后按功率/品牌
+        def sort_key(p):
+            cat_id = p['category_id'] or 0
+            name = p['name_cn']
+            power = extract_power(name)
+            brand = get_brand(name)
+            phase = get_phase_order(name)
+
+            # 分类排序：1=太阳能板, 2=逆变器, 3=电池, 4=支架
+            # 太阳能板和电池按功率排序
+            if cat_id in [1, 3]:
+                return (cat_id, power, p['id'])
+            # 逆变器按品牌、功率、单相/三相排序
+            elif cat_id == 2:
+                return (cat_id, brand, power, phase, p['id'])
+            else:
+                return (cat_id, p['id'])
+
+        product_list.sort(key=sort_key)
+        return jsonify(product_list)
 
     @app.route('/api/products', methods=['POST'])
     def create_product():
